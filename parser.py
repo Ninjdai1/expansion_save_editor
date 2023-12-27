@@ -1,6 +1,6 @@
 import struct
 import utils
-from offsets import offsets_dict
+from games import offsets_dict, gamedata_dict
 
 # More complete information on how the save data is structured can be found at:
 # https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)
@@ -39,7 +39,7 @@ def getSaveInfo(data):
     # We return the save's index and the playtime on it
     return save
 
-def getCurrentSave(save_a, save_b):
+def getCurrentSave(save_a: dict, save_b: dict):
     save = None
     # We check for the save's index and pick whichever is the greatest
     if save_a["index"] < save_b["index"]:
@@ -75,17 +75,28 @@ def getCurrentSave(save_a, save_b):
 # 11 	3968 	PC buffer G
 # 12 	3968 	PC buffer H
 # 13 	2000 	PC buffer I
-def process(savedata):
-    player = {
+def process(savedata: dict, game_version: str):
+    save = {
         "name": None,
+        "gender": None,
         "team": [],
         "boxes": [],
     }
+    offsets = offsets_dict[game_version]
+    gamedata = gamedata_dict[game_version]
 
-    player["name"] = utils.readstring(savedata["sections"][0]["rawData"][0:7]).strip()
+    sections = savedata["sections"]
+    # Section 0 data
+    save["name"] = utils.readstring(sections[0]["rawData"][0:7]).strip()
+    save["security_key"] = int(struct.unpack('<I', sections[0]["rawData"][offsets["security_key"][0]:offsets["security_key"][1]])[0])
+    if("gender" in offsets):
+        gender_id = sections[0]["rawData"][offsets["gender"]]
+        save["gender"] = gamedata["genders"][gender_id]
+    # Section 1 data
+    save["team_count"] = int(struct.unpack('<I', sections[1]["rawData"][offsets["team_count"][0]:offsets["team_count"][1]])[0])
 
 
-    return player
+    return save
 
 def parse(path: str, game_version: str):
     if not game_version in offsets_dict:
@@ -104,7 +115,7 @@ def parse(path: str, game_version: str):
     #print(save)
     print(f"The current save slot is {save['slot']}")
 
-    processed_data = process(save)
+    processed_data = process(save, game_version)
 
     print(f"Player: {processed_data}")
 

@@ -1,3 +1,3 @@
 from parser import parse
 
-parse('./pokeemerald.sav', "vanilla")
+parse('./pokeemerald.sav', "emerald")
