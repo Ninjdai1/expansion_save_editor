@@ -1,6 +1,7 @@
 import struct
 import utils
 from games import offsets_dict, gamedata_dict
+from parsers import readRomHeader
 
 # More complete information on how the save data is structured can be found at:
 # https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)
@@ -118,5 +119,10 @@ def parse(path: str, game_version: str):
     processed_data = process(save, game_version)
 
     print(f"Player: {processed_data}")
+
+    rom_header = readRomHeader("pokeemerald.gba")
+
+    for k in rom_header.keys():
+        print(f"{k}: \"{rom_header[k]}\"")
 
     return processed_data
