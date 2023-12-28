@@ -2,25 +2,7 @@ import struct
 
 # Rom header parsing credit goes to
 # CebolaBros64 ( https://gist.github.com/CebolaBros64/c7eb2a3f48df5d4a8488ab75a7d0f9c9 )
-"""
-Documentation from GBATEK
-    https://problemkaputt.de/gbatek-gba-cartridge-header.htm
 
-Header Overview
-    Address Bytes Expl.
-    000h    4     ROM Entry Point  (32bit ARM branch opcode, eg. "B rom_start")
-    004h    156   Nintendo Logo    (compressed bitmap, required!)
-    0A0h    12    Game Title       (uppercase ascii, max 12 characters)
-    0ACh    4     Game Code        (uppercase ascii, 4 characters)
-    0B0h    2     Maker Code       (uppercase ascii, 2 characters)
-    0B2h    1     Fixed value      (must be 96h, required!)
-    0B3h    1     Main unit code   (00h for current GBA models)
-    0B4h    1     Device type      (usually 00h) (bit7=DACS/debug related)
-    0B5h    7     Reserved Area    (should be zero filled)
-    0BCh    1     Software version (usually 00h)
-    0BDh    1     Complement check (header checksum, required!)
-    0BEh    2     Reserved Area    (should be zero filled)
-"""
 def readRomHeader(path: str):
     HEADER_FMT = "< 4s 156s 12s 4s 2s c c c 7x c c 2x"
     PADDING_1 = f"{256 - struct.calcsize(HEADER_FMT)}s"
@@ -149,24 +131,26 @@ def readRomHeader(path: str):
     return header_dict
 
 """
-struct CompressedSpritePalette
-{
-    const u32 *data;  // LZ77 compressed palette data
-    u16 tag;
-};
-struct CompressedSpriteSheet
-{
-    const u32 *data;  // LZ77 compressed pixel data
-    u16 size;        // Uncompressed size of pixel data
-    u16 tag;
-};
+Documentation from GBATEK
+    https://problemkaputt.de/gbatek-gba-cartridge-header.htm
 
-struct SpritePalette
-{
-    const u16 *data;  // Raw uncompressed palette data
-    u16 tag;
-};
-
+Header Overview
+    Address Bytes Expl.
+    000h    4     ROM Entry Point  (32bit ARM branch opcode, eg. "B rom_start")
+    004h    156   Nintendo Logo    (compressed bitmap, required!)
+    0A0h    12    Game Title       (uppercase ascii, max 12 characters)
+    0ACh    4     Game Code        (uppercase ascii, 4 characters)
+    0B0h    2     Maker Code       (uppercase ascii, 2 characters)
+    0B2h    1     Fixed value      (must be 96h, required!)
+    0B3h    1     Main unit code   (00h for current GBA models)
+    0B4h    1     Device type      (usually 00h) (bit7=DACS/debug related)
+    0B5h    7     Reserved Area    (should be zero filled)
+    0BCh    1     Software version (usually 00h)
+    0BDh    1     Complement check (header checksum, required!)
+    0BEh    2     Reserved Area    (should be zero filled)
+"""
+"""
+Below is the struct of GFRomHeader :
 struct GFRomHeader
 {
     u32 version;
