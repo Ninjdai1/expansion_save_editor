@@ -2,7 +2,7 @@ import struct
 import utils
 from games import offsets_dict, gamedata_dict
 import re
-from parsers import readRomHeader
+from . import readRomHeader, parseRom
 from operator import xor
 import io
 import os
@@ -101,19 +101,19 @@ def process(savedata: dict, game_version: str):
 
 
 
-         
+
     # Section 1 data
-    natures = ["Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky"]    
-    
+    natures = ["Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky"]
+
     #When a pokemons data is saved, it's encrypted in one of 24 orders. We need to run a modulo against this list to get the order we need to interpret bytes.
     #Sources:https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_data_substructures_(Generation_III), https://github.com/ads04r/Gen3Save/blob/master/pokemondata/Gen3Pokemon.py
     orders = ['GAEM', 'GAME', 'GEAM', 'GEMA', 'GMAE', 'GMEA', 'AGEM', 'AGME', 'AEGM', 'AEMG', 'AMGE', 'AMEG', 'EGAM', 'EGMA', 'EAGM', 'EAMG', 'EMGA', 'EMAG', 'MGAE', 'MGEA', 'MAGE', 'MAEG', 'MEGA', 'MEAG']
 
     save["team_count"] = int(struct.unpack('<I', sections[1]["rawData"][offsets["team_count"][0]:offsets["team_count"][1]])[0])
     for i in range (0, save["team_count"]):
-        
-        pokemon = {}    
-    
+
+        pokemon = {}
+
         personality = int(struct.unpack('<I', sections[1]["rawData"][offsets["team_offset"]+((i*100)):offsets["team_offset"]+(4+(i*100))])[0])
         orderstring = orders[personality % 24]
         decryptionkey = personality ^ save["trainer_id"]
@@ -121,8 +121,8 @@ def process(savedata: dict, game_version: str):
         pokemon["nickname"] = utils.readstring(sections[1]["rawData"][offsets["team_offset"]+(8+(i*100)):offsets["team_offset"]+(18+(i*100))]).strip()
 
 
-        pokemon["checksum"] = int(struct.unpack('<I', sections[1]["rawData"][offsets["team_offset"]+(28 + (i*100)):offsets["team_offset"]+(32+(i*100))])[0]) 
-        pokemon["Level"] = int(struct.unpack('<B', sections[1]["rawData"][offsets["team_offset"]+(84 + (i*100)):offsets["team_offset"]+(85+(i*100))])[0]) 
+        pokemon["checksum"] = int(struct.unpack('<I', sections[1]["rawData"][offsets["team_offset"]+(28 + (i*100)):offsets["team_offset"]+(32+(i*100))])[0])
+        pokemon["Level"] = int(struct.unpack('<B', sections[1]["rawData"][offsets["team_offset"]+(84 + (i*100)):offsets["team_offset"]+(85+(i*100))])[0])
 
         substructSections = {}
         for j in range (0, 4):
@@ -132,14 +132,14 @@ def process(savedata: dict, game_version: str):
             decryptedValue = decryptSubstruct(sectionData, decryptionkey)
             substructSections[orderstring[j]] = decryptedValue
         print(substructSections[orderstring[j]])
-        
+
         pokemon['species'] = searchDotHFile('./species.h', str(int(struct.unpack('<H', substructSections['G'][0:2])[0])))
-        #pokemon['exp'] = int(struct.unpack('<I', substructSections['G'][4:8])[0]) 
-        pokemon['item'] = searchDotHFile('./items.h', str(int(struct.unpack('<H', substructSections['G'][2:4])[0]))) 
-        pokemon['move1'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][0:2])[0]))) 
-        pokemon['move2'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][2:4])[0]))) 
+        #pokemon['exp'] = int(struct.unpack('<I', substructSections['G'][4:8])[0])
+        pokemon['item'] = searchDotHFile('./items.h', str(int(struct.unpack('<H', substructSections['G'][2:4])[0])))
+        pokemon['move1'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][0:2])[0])))
+        pokemon['move2'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][2:4])[0])))
         pokemon['move3'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][4:6])[0])))
-        pokemon['move4'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][6:8])[0]))) 
+        pokemon['move4'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][6:8])[0])))
 
         pokemon['EvHp'] = int(struct.unpack('<B', substructSections['E'][0:1])[0])
         pokemon['EvAtk'] = int(struct.unpack('<B', substructSections['E'][1:2])[0])
@@ -160,10 +160,10 @@ def process(savedata: dict, game_version: str):
         '''
 
         pokemon['Ivs'] = getivs(int(struct.unpack('<I', substructSections['M'][4:8])[0]))
-                  
+
         rawAbilities = getSpeciesAttribute(pokemon['species'], 'abilities')
         abilities = re.split(r'[,{]', rawAbilities)
-        pokemon['Ability'] = re.sub(r'^.*?_', '', abilities[pokemon['Ivs']['AbilityFlag'] + 1]) 
+        pokemon['Ability'] = re.sub(r'^.*?_', '', abilities[pokemon['Ivs']['AbilityFlag'] + 1])
 
         rawGenderRatio = getSpeciesAttribute(pokemon['species'], 'genderRatio')
         genderRatio = re.split(r'[()]', rawGenderRatio)
@@ -183,10 +183,10 @@ def process(savedata: dict, game_version: str):
     # Section 2 Data
 
     teamToShowdown(save['team'])
-    
+
     return save
 
-def parse(path: str, game_version: str):
+def parseSave(path: str, game_version: str):
     if not game_version in offsets_dict:
         print(f"This version ({game_version}) is not supported ! If you are this version's developer, please define its offsets in offsets.py")
         return
@@ -207,16 +207,13 @@ def parse(path: str, game_version: str):
 
     print(f"Player: {processed_data}")
 
-    rom_header = readRomHeader("pokeemerald.gba")
-
-   # for k in rom_header.keys():
-   #     print(f"{k}: \"{rom_header[k]}\"")
+    romInfo = parseRom("pokeemerald.gba")
 
     return processed_data
 
 def getivs(value):
 
-    iv = {} 
+    iv = {}
     bitstring = str(str(bin(value)[2:])[::-1] + '00000000000000000000000000000000')[0:32]
     iv['hp'] = int(bitstring[0:5], 2)
     iv['attack'] = int(bitstring[5:10], 2)
@@ -252,7 +249,7 @@ def searchDotHFile(filename, searchedValue):
     with open(filename) as f:
         for line in f:
             if searchedValue in line:
-                substring = re.sub(r'^.*?_', '', line) 
+                substring = re.sub(r'^.*?_', '', line)
                 ch_index = substring.find(' ')
                 return substring[:ch_index]
     return 'Unable to find'
@@ -284,8 +281,7 @@ def teamToShowdown(team: dict):
             f.write("- " + team[i]['move1'] + "\n")
             f.write("- " + team[i]['move2'] + "\n")
             f.write("- " + team[i]['move3'] + "\n")
-            f.write("- " + team[i]['move4'] + "\n")            
-            f.write("\n")   
+            f.write("- " + team[i]['move4'] + "\n")
+            f.write("\n")
 
         f.close()
-    

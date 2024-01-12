@@ -1,3 +1,3 @@
-from parser import *
+from parsers import parseSave
 
-parse('./pokeemerald.sav', "emerald")
+parseSave('./pokeemerald.sav', "emerald")
