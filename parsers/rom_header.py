@@ -24,7 +24,7 @@ def readRomHeader(rom):
             "
     PADDING_2 = f"{516 - struct.calcsize(HEADER_FMT + PADDING_1 + GF_HEADER_FMT)}s"
     RHH_HEADER_FMT = f"6s \
-            c c c c \
+            b b b c \
             4s 4s 4s 4s\
             "
 
@@ -127,7 +127,7 @@ def readRomHeader(rom):
         'giftRibbonsOffset':        unpacked_header[80], # 4 bytes
         'enigmaBerryOffset':        unpacked_header[81], # 4 bytes
         'enigmaBerrySize':          unpacked_header[82], # 4 bytes
-        'moveDescriptions':         unpacked_header[83], # 4 bytes
+        # 'moveDescriptions':         unpacked_header[83], # 4 bytes *
         'unk20':                    unpacked_header[84], # 4 bytes
 
         #'PADDING_2':                unpacked_header[85],
