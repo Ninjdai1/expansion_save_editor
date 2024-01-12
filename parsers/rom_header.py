@@ -130,7 +130,7 @@ def readRomHeader(rom):
         'moveDescriptions':         unpacked_header[83], # 4 bytes
         'unk20':                    unpacked_header[84], # 4 bytes
 
-        #'PADDING_1':                unpacked_header[85],
+        #'PADDING_2':                unpacked_header[85],
 
         'rhh_magic':                unpacked_header[86], # 6 bytes, should be "RHHEXP"
 
