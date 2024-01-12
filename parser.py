@@ -1,7 +1,11 @@
 import struct
 import utils
 from games import offsets_dict, gamedata_dict
+import re
 from parsers import readRomHeader
+from operator import xor
+import io
+import os
 
 # More complete information on how the save data is structured can be found at:
 # https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)
@@ -89,14 +93,97 @@ def process(savedata: dict, game_version: str):
     sections = savedata["sections"]
     # Section 0 data
     save["name"] = utils.readstring(sections[0]["rawData"][0:7]).strip()
+    save["trainer_id"] = int(struct.unpack('<I', sections[0]["rawData"][offsets["trainer_id"][0]:offsets["trainer_id"][1]])[0])
     save["security_key"] = int(struct.unpack('<I', sections[0]["rawData"][offsets["security_key"][0]:offsets["security_key"][1]])[0])
     if("gender" in offsets):
         gender_id = sections[0]["rawData"][offsets["gender"]]
         save["gender"] = gamedata["genders"][gender_id]
+
+
+
+         
     # Section 1 data
+    natures = ["Hardy", "Lonely", "Brave", "Adamant", "Naughty", "Bold", "Docile", "Relaxed", "Impish", "Lax", "Timid", "Hasty", "Serious", "Jolly", "Naive", "Modest", "Mild", "Quiet", "Bashful", "Rash", "Calm", "Gentle", "Sassy", "Careful", "Quirky"]    
+    
+    #When a pokemons data is saved, it's encrypted in one of 24 orders. We need to run a modulo against this list to get the order we need to interpret bytes.
+    #Sources:https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_data_substructures_(Generation_III), https://github.com/ads04r/Gen3Save/blob/master/pokemondata/Gen3Pokemon.py
+    orders = ['GAEM', 'GAME', 'GEAM', 'GEMA', 'GMAE', 'GMEA', 'AGEM', 'AGME', 'AEGM', 'AEMG', 'AMGE', 'AMEG', 'EGAM', 'EGMA', 'EAGM', 'EAMG', 'EMGA', 'EMAG', 'MGAE', 'MGEA', 'MAGE', 'MAEG', 'MEGA', 'MEAG']
+
     save["team_count"] = int(struct.unpack('<I', sections[1]["rawData"][offsets["team_count"][0]:offsets["team_count"][1]])[0])
+    for i in range (0, save["team_count"]):
+        
+        pokemon = {}    
+    
+        personality = int(struct.unpack('<I', sections[1]["rawData"][offsets["team_offset"]+((i*100)):offsets["team_offset"]+(4+(i*100))])[0])
+        orderstring = orders[personality % 24]
+        decryptionkey = personality ^ save["trainer_id"]
+
+        pokemon["nickname"] = utils.readstring(sections[1]["rawData"][offsets["team_offset"]+(8+(i*100)):offsets["team_offset"]+(18+(i*100))]).strip()
 
 
+        pokemon["checksum"] = int(struct.unpack('<I', sections[1]["rawData"][offsets["team_offset"]+(28 + (i*100)):offsets["team_offset"]+(32+(i*100))])[0]) 
+        pokemon["Level"] = int(struct.unpack('<B', sections[1]["rawData"][offsets["team_offset"]+(84 + (i*100)):offsets["team_offset"]+(85+(i*100))])[0]) 
+
+        substructSections = {}
+        for j in range (0, 4):
+            #Calculation below:
+            #(i * 100) gets current pokemon, 32 is the offset for the 48 bit encrypted block. Blocks are encrypted in 12 byte chuncks, hence 12 * j
+            sectionData = (sections[1]["rawData"][offsets["team_offset"]+(32+(i*100)+(j*12)):offsets["team_offset"]+(32+(i*100)+(j+1)*12)])
+            decryptedValue = decryptSubstruct(sectionData, decryptionkey)
+            substructSections[orderstring[j]] = decryptedValue
+        print(substructSections[orderstring[j]])
+        
+        pokemon['species'] = searchDotHFile('./species.h', str(int(struct.unpack('<H', substructSections['G'][0:2])[0])))
+        #pokemon['exp'] = int(struct.unpack('<I', substructSections['G'][4:8])[0]) 
+        pokemon['item'] = searchDotHFile('./items.h', str(int(struct.unpack('<H', substructSections['G'][2:4])[0]))) 
+        pokemon['move1'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][0:2])[0]))) 
+        pokemon['move2'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][2:4])[0]))) 
+        pokemon['move3'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][4:6])[0])))
+        pokemon['move4'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][6:8])[0]))) 
+
+        pokemon['EvHp'] = int(struct.unpack('<B', substructSections['E'][0:1])[0])
+        pokemon['EvAtk'] = int(struct.unpack('<B', substructSections['E'][1:2])[0])
+        pokemon['EvDef'] = int(struct.unpack('<B', substructSections['E'][2:3])[0])
+        pokemon['EvSpe'] = int(struct.unpack('<B', substructSections['E'][3:4])[0])
+        pokemon['EvSpA'] = int(struct.unpack('<B', substructSections['E'][4:5])[0])
+        pokemon['EvSpD'] = int(struct.unpack('<B', substructSections['E'][5:6])[0])
+
+        pokemon['Nature'] = natures[personality % 25]
+
+        ''''
+        pokemon['HP'] = int(struct.unpack('<H', sections[1]["rawData"][offsets["team_offset"]+(88 + (i*100)):offsets["team_offset"]+(90 + (i*100))])[0])
+        pokemon['Atk'] = int(struct.unpack('<H', sections[1]["rawData"][offsets["team_offset"]+(90 + (i*100)):offsets["team_offset"]+(92 + (i*100))])[0])
+        pokemon['Def'] = int(struct.unpack('<H', sections[1]["rawData"][offsets["team_offset"]+(92 + (i*100)):offsets["team_offset"]+(94 + (i*100))])[0])
+        pokemon['Spe'] = int(struct.unpack('<H', sections[1]["rawData"][offsets["team_offset"]+(94 + (i*100)):offsets["team_offset"]+(96 + (i*100))])[0])
+        pokemon['SpA'] = int(struct.unpack('<H', sections[1]["rawData"][offsets["team_offset"]+(96 + (i*100)):offsets["team_offset"]+(98 + (i*100))])[0])
+        pokemon['SpD'] = int(struct.unpack('<H', sections[1]["rawData"][offsets["team_offset"]+(98 + (i*100)):offsets["team_offset"]+(100 + (i*100))])[0])
+        '''
+
+        pokemon['Ivs'] = getivs(int(struct.unpack('<I', substructSections['M'][4:8])[0]))
+                  
+        rawAbilities = getSpeciesAttribute(pokemon['species'], 'abilities')
+        abilities = re.split(r'[,{]', rawAbilities)
+        pokemon['Ability'] = re.sub(r'^.*?_', '', abilities[pokemon['Ivs']['AbilityFlag'] + 1]) 
+
+        rawGenderRatio = getSpeciesAttribute(pokemon['species'], 'genderRatio')
+        genderRatio = re.split(r'[()]', rawGenderRatio)
+        print(genderRatio)
+
+        genderInteger = int(struct.unpack('<B', sections[1]["rawData"][offsets["team_offset"]+(0+(i*100)):offsets["team_offset"]+(1+(i*100))])[0])
+
+        if len(genderRatio) < 2:
+            pokemon['Gender'] = ""
+        elif genderInteger > (224 * 0.01 * float(genderRatio[1])):
+            pokemon['Gender'] = "(M)"
+        else:
+            pokemon['Gender'] = "(F)"
+
+        save['team'].append(pokemon)
+
+    # Section 2 Data
+
+    teamToShowdown(save['team'])
+    
     return save
 
 def parse(path: str, game_version: str):
@@ -122,7 +209,83 @@ def parse(path: str, game_version: str):
 
     rom_header = readRomHeader("pokeemerald.gba")
 
-    for k in rom_header.keys():
-        print(f"{k}: \"{rom_header[k]}\"")
+   # for k in rom_header.keys():
+   #     print(f"{k}: \"{rom_header[k]}\"")
 
     return processed_data
+
+def getivs(value):
+
+    iv = {} 
+    bitstring = str(str(bin(value)[2:])[::-1] + '00000000000000000000000000000000')[0:32]
+    iv['hp'] = int(bitstring[0:5], 2)
+    iv['attack'] = int(bitstring[5:10], 2)
+    iv['defence'] = int(bitstring[10:15], 2)
+    iv['speed'] = int(bitstring[15:20], 2)
+    iv['spatk'] = int(bitstring[20:25], 2)
+    iv['spdef'] = int(bitstring[25:30], 2)
+    iv['AbilityFlag'] = int(bitstring[30:31], 2)
+    return iv
+
+def decryptSubstruct(data, key):
+    if len(data) != 12:
+        return []
+    a = xor(struct.unpack('<I', data[0:4])[0], key)
+    b = xor(struct.unpack('<I', data[4:8])[0], key)
+    c = xor(struct.unpack('<I', data[8:12])[0], key)
+    return struct.pack('<III', a, b, c)
+
+def getSpeciesAttribute(species, attribute):
+    speciesBlock = "[SPECIES_" + species + "]"
+    target = speciesBlock
+    for i in range (1, 10):
+        filename = "./gen_" + str(i) + ".h"
+        with io.open(filename, "r", encoding="utf-8") as f:
+            for line in f:
+                if target in line: #We found our pokemon
+                    if target == speciesBlock:
+                        target = attribute
+                    else:
+                        return line
+
+def searchDotHFile(filename, searchedValue):
+    with open(filename) as f:
+        for line in f:
+            if searchedValue in line:
+                substring = re.sub(r'^.*?_', '', line) 
+                ch_index = substring.find(' ')
+                return substring[:ch_index]
+    return 'Unable to find'
+
+def teamToShowdown(team: dict):
+
+    showdownFilePath = 'ShowdownTeam.txt'
+
+    if os.path.exists(showdownFilePath):
+        os.remove(showdownFilePath)
+
+    with open(showdownFilePath, 'w') as f:
+        for i in range (0, len(team)):
+            if str.lower(team[i]['nickname']) == str.lower(team[i]['species']):
+                f.write(team[i]['nickname'] + " ")
+            else:
+                f.write(team[i]['nickname'] + " (" + team[i]['species'] + ") " )
+            f.write(team[i]['Gender'] + ' ')
+            if team[i]['item'] != 'NONE':
+                f.write('@ ' + team[i]['item'])
+            f.write("\n")
+            f.write("Ability: " + team[i]['Ability'] + "\n")
+            f.write("Level: " + str(team[i]['Level']) + "\n")
+            f.write("EVs: " + str(team[i]['EvHp']) + " HP / " + str(team[i]['EvAtk']) + " Atk / " + str(team[i]['EvDef']) + " Def / ")
+            f.write(str(team[i]['EvSpA']) + " SpA / " + str(team[i]['EvSpD']) + " SpD / " + str(team[i]['EvSpe']) + " Spe\n")
+            f.write(team[i]['Nature'] + " Nature\n")
+            f.write("IVs: " + str(team[i]['Ivs']['hp']) + " HP / " + str(team[i]['Ivs']['attack']) + " Atk / " + str(team[i]['Ivs']['defence']) + " Def / ")
+            f.write(str(team[i]['Ivs']['spatk']) + " SpA / " + str(team[i]['Ivs']['spdef']) + " SpD / " + str(team[i]['Ivs']['speed']) + " Spe\n")
+            f.write("- " + team[i]['move1'] + "\n")
+            f.write("- " + team[i]['move2'] + "\n")
+            f.write("- " + team[i]['move3'] + "\n")
+            f.write("- " + team[i]['move4'] + "\n")            
+            f.write("\n")   
+
+        f.close()
+    
