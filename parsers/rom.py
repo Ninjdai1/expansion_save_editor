@@ -90,7 +90,7 @@ def readMoves(rom, header):
 
 species_struct_size = 160
 def readSpecies(rom, header):
-    species_offset = 11515104 # Hardcoded until I get the offsets right
+    species_offset = header['speciesInfo']
     species_count = header['numSpecies']
     pokemonNameLength = header['pokemonNameLength1']
     species_dict = {}
