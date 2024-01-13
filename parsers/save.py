@@ -234,19 +234,6 @@ def decryptSubstruct(data, key):
     c = xor(struct.unpack('<I', data[8:12])[0], key)
     return struct.pack('<III', a, b, c)
 
-def getSpeciesAttribute(species, attribute):
-    speciesBlock = "[SPECIES_" + species + "]"
-    target = speciesBlock
-    for i in range (1, 10):
-        filename = "./gen_" + str(i) + ".h"
-        with io.open(filename, "r", encoding="utf-8") as f:
-            for line in f:
-                if target in line: #We found our pokemon
-                    if target == speciesBlock:
-                        target = attribute
-                    else:
-                        return line
-
 def searchDotHFile(filename, searchedValue):
     with open(filename) as f:
         for line in f:

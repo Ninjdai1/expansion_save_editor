@@ -146,8 +146,6 @@ def readRomHeader(rom):
     }
     return header_dict
 
-def getSpecies(rom: str):
-    pass
 """
 Documentation from GBATEK
     https://problemkaputt.de/gbatek-gba-cartridge-header.htm
