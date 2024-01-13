@@ -10,7 +10,7 @@ import os
 # More complete information on how the save data is structured can be found at:
 # https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)
 
-def getSaveInfo(data):
+def getSaveInfo(data) -> dict:
     save = {
         "sections": [ {} for _ in range(14) ],
         "slot": None
@@ -80,7 +80,7 @@ def getCurrentSave(save_a: dict, save_b: dict):
 # 11 	3968 	PC buffer G
 # 12 	3968 	PC buffer H
 # 13 	2000 	PC buffer I
-def process(savedata: dict, game_version: str, rom: dict):
+def process(savedata: dict, game_version: str, rom: dict) -> dict:
     save = {
         "name": None,
         "gender": None,
@@ -192,10 +192,10 @@ def process(savedata: dict, game_version: str, rom: dict):
 
     return save
 
-def parseSave(path: str, game_version: str):
+def parseSave(path: str, game_version: str) -> dict:
     if not game_version in offsets_dict:
         print(f"This version ({game_version}) is not supported ! If you are this version's developer, please define its offsets in offsets.py")
-        return
+        return {}
     else:
         offsets = offsets_dict[game_version]
     data = utils.byteArrayFromFile(path)
@@ -212,14 +212,9 @@ def parseSave(path: str, game_version: str):
     rom = parseRom("pokeemerald.gba")
     processed_data = process(save, game_version, rom)
 
-    print(f"Player: {processed_data}")
-
-    teamToShowdown(processed_data['team'])
-    print("\nYour team was exported as a competitive-formatted party (see ShowdownTeam.txt).")
-
     return processed_data
 
-def getivs(value):
+def getivs(value) -> dict:
 
     iv = {}
     bitstring = str(str(bin(value)[2:])[::-1] + '00000000000000000000000000000000')[0:32]
@@ -239,33 +234,3 @@ def decryptSubstruct(data, key):
     b = xor(struct.unpack('<I', data[4:8])[0], key)
     c = xor(struct.unpack('<I', data[8:12])[0], key)
     return struct.pack('<III', a, b, c)
-
-def teamToShowdown(team: dict):
-
-    showdownFilePath = 'ShowdownTeam.txt'
-
-    if os.path.exists(showdownFilePath):
-        os.remove(showdownFilePath)
-
-    with open(showdownFilePath, 'w') as f:
-        for i in range (0, len(team)):
-            if str.lower(team[i]['nickname']) == str.lower(team[i]['species']):
-                f.write(team[i]['nickname'] + " ")
-            else:
-                f.write(team[i]['nickname'] + " (" + team[i]['species'] + ") " )
-            f.write(team[i]['Gender'] + ' ')
-            if team[i]['item'] != 'NONE':
-                f.write('@ ' + team[i]['item'])
-            f.write("\n")
-            f.write("Ability: " + str(team[i]['Ability']) + "\n")
-            f.write("Level: " + str(team[i]['Level']) + "\n")
-            f.write("EVs: " + str(team[i]['EvHp']) + " HP / " + str(team[i]['EvAtk']) + " Atk / " + str(team[i]['EvDef']) + " Def / ")
-            f.write(str(team[i]['EvSpA']) + " SpA / " + str(team[i]['EvSpD']) + " SpD / " + str(team[i]['EvSpe']) + " Spe\n")
-            f.write(team[i]['Nature'] + " Nature\n")
-            f.write("IVs: " + str(team[i]['Ivs']['hp']) + " HP / " + str(team[i]['Ivs']['attack']) + " Atk / " + str(team[i]['Ivs']['defence']) + " Def / ")
-            f.write(str(team[i]['Ivs']['spatk']) + " SpA / " + str(team[i]['Ivs']['spdef']) + " SpD / " + str(team[i]['Ivs']['speed']) + " Spe\n")
-            for move in team[i]['moves']:
-                f.write("- " + move + "\n")
-            f.write("\n")
-
-        f.close()
