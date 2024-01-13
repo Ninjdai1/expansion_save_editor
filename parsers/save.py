@@ -139,7 +139,10 @@ def process(savedata: dict, game_version: str, rom: dict):
 
         pokemon['exp'] = int(struct.unpack('<I', substructSections['G'][4:8])[0])
         heldItemId = int(struct.unpack('<H', substructSections['G'][2:4])[0])
-        pokemon['item'] = rom['items'][heldItemId]['name']
+        if heldItemId == 0:
+            pokemon['item'] = 'NONE'
+        else:
+            pokemon['item'] = rom['items'][heldItemId]['name']
 
         moves = []
         for i in range(4):
