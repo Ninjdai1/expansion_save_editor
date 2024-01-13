@@ -1,5 +1,5 @@
 import struct
-import utils
+from . import utils
 from games import offsets_dict, gamedata_dict
 import re
 from . import readRomHeader, parseRom
@@ -25,11 +25,11 @@ def getSaveInfo(data):
         # The section's data is up to 3968 bytes long (see table below). The end 12 bytes of the section are occupied by footer data.
         # There are 116 bytes of padding between the section's data and its footer
         # Footer includes Section ID (2 bytes), Checksum (2 bytes), Signature (4 bytes), Save index (4 bytes)
-        print(section["footer"])
+        #print(section["footer"])
 
         section["id"] = struct.unpack('<H', section["footer"][0:2])[0]
         section["index"] = struct.unpack('<I', section["footer"][4:8])[0]
-        print(section["id"], section["index"])
+        #print(section["id"], section["index"])
 
         ds = 0
 
@@ -131,7 +131,7 @@ def process(savedata: dict, game_version: str):
             sectionData = (sections[1]["rawData"][offsets["team_offset"]+(32+(i*100)+(j*12)):offsets["team_offset"]+(32+(i*100)+(j+1)*12)])
             decryptedValue = decryptSubstruct(sectionData, decryptionkey)
             substructSections[orderstring[j]] = decryptedValue
-        print(substructSections[orderstring[j]])
+        #print(substructSections[orderstring[j]])
 
         pokemon['species'] = searchDotHFile('./species.h', str(int(struct.unpack('<H', substructSections['G'][0:2])[0])))
         #pokemon['exp'] = int(struct.unpack('<I', substructSections['G'][4:8])[0])
@@ -167,7 +167,7 @@ def process(savedata: dict, game_version: str):
 
         rawGenderRatio = getSpeciesAttribute(pokemon['species'], 'genderRatio')
         genderRatio = re.split(r'[()]', rawGenderRatio)
-        print(genderRatio)
+        #print(genderRatio)
 
         genderInteger = int(struct.unpack('<B', sections[1]["rawData"][offsets["team_offset"]+(0+(i*100)):offsets["team_offset"]+(1+(i*100))])[0])
 

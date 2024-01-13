@@ -11,7 +11,7 @@ def readRomHeader(rom):
             4s 4s 4s \
             4s 4s 4s 4s 4s \
             4s 4s 4s \
-            4s c c c c \
+            4s b b b b \
             c c c c c c c c c c c c c \
             4s 4s \
             4s 4s 4s 4s 4s 4s 4s 4s 4s 4s \
