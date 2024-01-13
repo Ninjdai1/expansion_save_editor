@@ -26,7 +26,7 @@ Also planned, but not WIP:
 * PKHEX-compatible vanilla mons export (.pk*)
 
 Not planned:
-* Backwards-compatibility with versions of the expansion older than 1.7.2, as important features and bugfixes required for ESE to work are only available starting from 1.7.2 (namely, https://github.com/rh-hideout/pokeemerald-expansion/pull/3980, https://github.com/rh-hideout/pokeemerald-expansion/pull/3861, https://github.com/rh-hideout/pokeemerald-expansion/pull/3831)
+* Backwards-compatibility with versions of the expansion older than 1.8, as important features and bugfixes required for ESE to work are only available starting from 1.8 (namely, https://github.com/rh-hideout/pokeemerald-expansion/pull/3980, https://github.com/rh-hideout/pokeemerald-expansion/pull/3861, https://github.com/rh-hideout/pokeemerald-expansion/pull/3831)
 
 Feel free to open issues/PRs that are outside of the stated goals ! If a feature is said not planned, that only means I don't plan to work on it, but I can still accept a PR !
 
