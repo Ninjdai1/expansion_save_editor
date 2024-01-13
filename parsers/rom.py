@@ -29,27 +29,28 @@ def readSpecies(rom, header):
 
     for i in range(species_count):
         speciesBytes = rom[species_offset +species_struct_size*i : species_offset + species_struct_size*(i+1)]
-        species = parseSpecies(speciesBytes, pokemonNameLength)
+        species = parseSpecies(speciesBytes, pokemonNameLength, i)
 
         print(f"{species['name']} ({species['natDexNum']}) is a {species['category']} Pokémon\n"
             + f"    Its types are: {species['types']}\n"
             + f"    It has {species['stats']['hp']} HP, {species['stats']['attack']} Attack, {species['stats']['defense']} Def, {species['stats']['speed']} Speed, {species['stats']['spattack']} SpAtk, {species['stats']['spdefense']} SpDef\n"
             + f"    Its abilities are {species['abilities']}\n")
 
-def parseSpecies(byteSpecies, pokemonNameLength):
-    stats = struct.unpack('b b b b b b ', byteSpecies[0:6])
-    typesNumbers = struct.unpack('b b ', byteSpecies[6:8])
+def parseSpecies(byteSpecies, pokemonNameLength, index):
+    stats = struct.unpack('< B B B B B B  ', byteSpecies[0:6])
+    typesNumbers = struct.unpack('< B B ', byteSpecies[6:8])
     if typesNumbers[0] == typesNumbers[1]:
         types = (type_table[typesNumbers[0]])
     else:
         types = (type_table[typesNumbers[0]], type_table[typesNumbers[1]])
-    abilities = struct.unpack('h h h ', byteSpecies[24:30])
+    abilities = struct.unpack('< H H H ', byteSpecies[24:30])
     category = utils.readstring(byteSpecies[31 : 31 + 13])
     name = utils.readstring(byteSpecies[44 : 44 + pokemonNameLength+1])
 
-    natDexNum = struct.unpack('h ', byteSpecies[56 : 58])[0]
+    natDexNum = struct.unpack('<H', byteSpecies[56 : 58])[0]
 
     return {
+        'id': index,
         'name': name,
         'natDexNum': natDexNum,
         'stats': {
