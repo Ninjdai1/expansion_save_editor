@@ -7,8 +7,8 @@ def parseRom(path: str):
         rom = f.read()
 
         header_info = readRomHeader(rom)
-        for k in header_info.keys():
-            print(f"{k}: \"{header_info[k]}\"")
+        # for k in header_info.keys():
+        #    print(f"{k}: \"{header_info[k]}\"")
 
         expansionVersion = getExpansionVersion(header_info)
         if not expansionVersion >= minimum_expansion_version:
@@ -93,7 +93,6 @@ def readSpecies(rom, header):
     species_offset = 11515104 # Hardcoded until I get the offsets right
     species_count = header['numSpecies']
     pokemonNameLength = header['pokemonNameLength1']
-    print(pokemonNameLength)
     species_dict = {}
 
     for i in range(species_count):

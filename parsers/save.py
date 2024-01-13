@@ -135,7 +135,7 @@ def process(savedata: dict, game_version: str, rom: dict):
 
         species = rom['species'][int(struct.unpack('<H', substructSections['G'][0:2])[0])]
         pokemon['species'] = species['name'].upper()
-        print(pokemon['species'].upper())
+        #print(pokemon['species'].upper())
 
         pokemon['exp'] = int(struct.unpack('<I', substructSections['G'][4:8])[0])
         heldItemId = int(struct.unpack('<H', substructSections['G'][2:4])[0])
@@ -186,7 +186,6 @@ def process(savedata: dict, game_version: str, rom: dict):
 
     # Section 2 Data
 
-    teamToShowdown(save['team'])
 
     return save
 
@@ -212,6 +211,8 @@ def parseSave(path: str, game_version: str):
 
     print(f"Player: {processed_data}")
 
+    teamToShowdown(processed_data['team'])
+    print("\nYour team was exported as a competitive-formatted party (see ShowdownTeam.txt).")
 
     return processed_data
 
