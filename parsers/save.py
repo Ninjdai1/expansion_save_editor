@@ -139,12 +139,12 @@ def process(savedata: dict, game_version: str, rom: dict):
 
         pokemon['exp'] = int(struct.unpack('<I', substructSections['G'][4:8])[0])
         heldItemId = int(struct.unpack('<H', substructSections['G'][2:4])[0])
-        pokemon['item'] = searchDotHFile('./items.h', str(heldItemId))
+        pokemon['item'] = rom['items'][heldItemId]['name']
 
         moves = []
         for i in range(4):
             moveId = int(struct.unpack('<H', substructSections['A'][i*2:i*2+2])[0])
-            moves.append(searchDotHFile('./moves.h', str(moveId)))
+            moves.append(rom['movesNames'][moveId])
         pokemon['moves'] = moves
 
         pokemon['EvHp'] = int(struct.unpack('<B', substructSections['E'][0:1])[0])
@@ -235,15 +235,6 @@ def decryptSubstruct(data, key):
     b = xor(struct.unpack('<I', data[4:8])[0], key)
     c = xor(struct.unpack('<I', data[8:12])[0], key)
     return struct.pack('<III', a, b, c)
-
-def searchDotHFile(filename, searchedValue):
-    with open(filename) as f:
-        for line in f:
-            if searchedValue in line:
-                substring = re.sub(r'^.*?_', '', line)
-                ch_index = substring.find(' ')
-                return substring[:ch_index]
-    return 'Unable to find'
 
 def teamToShowdown(team: dict):
 

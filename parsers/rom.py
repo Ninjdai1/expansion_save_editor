@@ -7,25 +7,63 @@ def parseRom(path: str):
         rom = f.read()
 
         header_info = readRomHeader(rom)
-        #for k in headerInfo.keys():
-        #    print(f"{k}: \"{headerInfo[k]}\"")
+        for k in header_info.keys():
+            print(f"{k}: \"{header_info[k]}\"")
 
         expansionVersion = getExpansionVersion(header_info)
         if not expansionVersion >= minimum_expansion_version:
             raise ValueError(f"Your rom is using expansion version {expansionVersion}, which is older than minimum supported version {minimum_expansion_version}")
 
         species = readSpecies(rom, header_info)
+        moves = readMoves(rom, header_info)
+        items = readItems(rom, header_info)
 
         return {
             'expansionVersion': expansionVersion,
             'header': header_info,
             'species': species,
+            'movesNames': moves,
+            'items': items,
         }
 
 minimum_expansion_version = "1.7.1"
 def getExpansionVersion(header):
     return f"{header['expansionVersionMajor']}.{header['expansionVersionMinor']}.{header['expansionVersionPatch']}"
 
+item_struct_size = 34
+item_struct_padding = 6
+def readItems(rom, header):
+    item_names_offset = 6378424
+    items_count = 846
+    itemNameLength = 13
+    items_dict = {}
+
+    for i in range(items_count):
+        item_bytes = rom[item_names_offset + (item_struct_size+item_struct_padding)*i : item_names_offset + (item_struct_size+item_struct_padding)*(i+1)]
+        item = parseItem(item_bytes, itemNameLength, i)
+        items_dict[i] = item
+    return items_dict
+
+def parseItem(byteItem, itemNameLength, index):
+    price = struct.unpack("<I", byteItem[0:4])[0]
+    name = utils.readstring(byteItem[15:15+itemNameLength])
+    return {
+        'id': index,
+        'price': price,
+        'name': name,
+    }
+
+move_name_size = 13
+def readMoves(rom, header):
+    move_names_offset = 5165720 #header['moveNames']
+    moves_count = 848#int(header['movesCount'])
+    moveNames = []
+
+    for i in range(moves_count):
+        move_name_bytes = rom[move_names_offset + move_name_size*i : move_names_offset + move_name_size*(i+1)]
+        move_name = utils.readstring(move_name_bytes)
+        moveNames.append(move_name)
+    return moveNames
 
 species_struct_size = 160
 def readSpecies(rom, header):
@@ -36,14 +74,14 @@ def readSpecies(rom, header):
     species_dict = {}
 
     for i in range(species_count):
-        species_bytes = rom[species_offset +species_struct_size*i : species_offset + species_struct_size*(i+1)]
+        species_bytes = rom[species_offset + species_struct_size*i : species_offset + species_struct_size*(i+1)]
         species = parseSpecies(species_bytes, pokemonNameLength, i)
         species_dict[species['id']] = species
 
-        print(f"{species['name']} ({species['natDexNum']}) is a {species['category']} Pokémon\n"
-            + f"    Its types are: {species['types']}\n"
-            + f"    It has {species['stats']['hp']} HP, {species['stats']['attack']} Attack, {species['stats']['defense']} Def, {species['stats']['speed']} Speed, {species['stats']['spattack']} SpAtk, {species['stats']['spdefense']} SpDef\n"
-            + f"    Its abilities are {species['abilities']}\n")
+        #print(f"{species['name']} ({species['natDexNum']}) is a {species['category']} Pokémon\n"
+        #    + f"    Its types are: {species['types']}\n"
+        #    + f"    It has {species['stats']['hp']} HP, {species['stats']['attack']} Attack, {species['stats']['defense']} Def, {species['stats']['speed']} Speed, {species['stats']['spattack']} SpAtk, {species['stats']['spdefense']} SpDef\n"
+        #    + f"    Its abilities are {species['abilities']}\n")
     return species_dict
 
 

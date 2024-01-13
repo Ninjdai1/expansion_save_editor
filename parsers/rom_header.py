@@ -8,7 +8,7 @@ def readRomHeader(rom):
     PADDING_1 = f"{256 - struct.calcsize(HEADER_FMT)}s"
     GF_HEADER_FMT = "4s 4s 32s \
             4s 4s 4s 4s 4s 4s 4s \
-            4s 4s 4s \
+            4s I 4s \
             4s 4s 4s 4s 4s \
             4s 4s 4s \
             4s b b b b \
@@ -25,7 +25,7 @@ def readRomHeader(rom):
     PADDING_2 = f"{516 - struct.calcsize(HEADER_FMT + PADDING_1 + GF_HEADER_FMT)}s"
     RHH_HEADER_FMT = f"6s \
             b b b c \
-            4s 4s 4s 4s\
+            I 4s 4s 4s\
             "
 
     HEADERS = HEADER_FMT + PADDING_1 + GF_HEADER_FMT + PADDING_2 + RHH_HEADER_FMT
