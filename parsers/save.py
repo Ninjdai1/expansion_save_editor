@@ -168,8 +168,8 @@ def process(savedata: dict, game_version: str, rom: dict):
         pokemon['Ivs'] = getivs(int(struct.unpack('<I', substructSections['M'][4:8])[0]))
 
         abilitiesIds = species['abilities']
-        print(abilitiesIds[pokemon['Ivs']['AbilityFlag']])
-        pokemon['Ability'] = abilitiesIds[pokemon['Ivs']['AbilityFlag']]
+        abilityId = abilitiesIds[pokemon['Ivs']['AbilityFlag']]
+        pokemon['Ability'] = rom['abilities'][abilityId]['name']
         # Only need to translate Abilities from int to strings and we're pretty much done here
 
         genderRatio = species['genderRatio']

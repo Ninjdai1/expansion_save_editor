@@ -17,6 +17,7 @@ def parseRom(path: str):
         species = readSpecies(rom, header_info)
         moves = readMoves(rom, header_info)
         items = readItems(rom, header_info)
+        abilities = readAbilities(rom, header_info)
 
         return {
             'expansionVersion': expansionVersion,
@@ -24,22 +25,44 @@ def parseRom(path: str):
             'species': species,
             'movesNames': moves,
             'items': items,
+            'abilities': abilities,
         }
 
 minimum_expansion_version = "1.7.1"
 def getExpansionVersion(header):
     return f"{header['expansionVersionMajor']}.{header['expansionVersionMinor']}.{header['expansionVersionPatch']}"
 
+abilities_struct_size = 13 + 4 + 1 + 1
+abilities_struct_padding = 9
+def readAbilities(rom, header):
+    abilities_offset = header['abilities']
+    abilities_count = header['abilitiesCount']
+    abilityNameLength = 12 + 1
+    abilities_dict = {}
+
+    for i in range(abilities_count):
+        ability_bytes = rom[abilities_offset + (abilities_struct_size+abilities_struct_padding)*i : abilities_offset + (abilities_struct_size+abilities_struct_padding)*(i+1)]
+        ability = parseAbility(ability_bytes, abilityNameLength, i)
+        abilities_dict[i] = ability
+    return abilities_dict
+
+def parseAbility(byteAbility, abilityNameLength, index):
+    name = utils.readstring(byteAbility[0:abilityNameLength])
+    return {
+        'id': index,
+        'name': name
+    }
+
 item_struct_size = 34
 item_struct_padding = 6
 def readItems(rom, header):
-    item_names_offset = 6378424
+    items_offset = header['items']
     items_count = 846
     itemNameLength = 13
     items_dict = {}
 
     for i in range(items_count):
-        item_bytes = rom[item_names_offset + (item_struct_size+item_struct_padding)*i : item_names_offset + (item_struct_size+item_struct_padding)*(i+1)]
+        item_bytes = rom[items_offset + (item_struct_size+item_struct_padding)*i : items_offset + (item_struct_size+item_struct_padding)*(i+1)]
         item = parseItem(item_bytes, itemNameLength, i)
         items_dict[i] = item
     return items_dict
@@ -53,22 +76,22 @@ def parseItem(byteItem, itemNameLength, index):
         'name': name,
     }
 
-move_name_size = 13
 def readMoves(rom, header):
-    move_names_offset = 5165720 #header['moveNames']
-    moves_count = 848#int(header['movesCount'])
+    move_names_offset = header['moveNames']
+    moves_count = header['movesCount']
     moveNames = []
+    moveNameLength = 12 + 1
 
     for i in range(moves_count):
-        move_name_bytes = rom[move_names_offset + move_name_size*i : move_names_offset + move_name_size*(i+1)]
+        move_name_bytes = rom[move_names_offset + moveNameLength*i : move_names_offset + moveNameLength*(i+1)]
         move_name = utils.readstring(move_name_bytes)
         moveNames.append(move_name)
     return moveNames
 
 species_struct_size = 160
 def readSpecies(rom, header):
-    species_offset = 11514832 # Hardcoded until I get the offsets right
-    species_count = 1523# header['numSpecies']
+    species_offset = 11515104 # Hardcoded until I get the offsets right
+    species_count = header['numSpecies']
     pokemonNameLength = header['pokemonNameLength1']
     print(pokemonNameLength)
     species_dict = {}

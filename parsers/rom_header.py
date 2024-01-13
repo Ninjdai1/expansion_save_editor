@@ -13,19 +13,21 @@ def readRomHeader(rom):
             4s 4s 4s \
             4s b b b b \
             c c c c c c c c c c c c c \
-            4s 4s \
-            4s 4s 4s 4s 4s 4s 4s 4s 4s 4s \
+            3s \
+            I I \
+            I I I I I I I I I I \
             4s \
-            4s 4s 4s \
-            4s 4s 4s 4s \
-            4s 4s 4s \
+            I I I \
+            I I I I \
+            I I I \
             c c c c c \
             3s 4s 4s 4s 4s 4s 4s \
             "
     PADDING_2 = f"{516 - struct.calcsize(HEADER_FMT + PADDING_1 + GF_HEADER_FMT)}s"
     RHH_HEADER_FMT = f"6s \
             b b b c \
-            I 4s 4s 4s\
+            2s \
+            I I I I\
             "
 
     HEADERS = HEADER_FMT + PADDING_1 + GF_HEADER_FMT + PADDING_2 + RHH_HEADER_FMT
@@ -67,7 +69,7 @@ def readRomHeader(rom):
         'monIconPalettes':          unpacked_header[20], # 4 bytes
 
         # 'monSpeciesNames':          unpacked_header[21], # 4 bytes  *
-        'moveNames':                unpacked_header[22], # 4 bytes
+        'moveNames':                unpacked_header[22] - int("0x8000000", 16), # 4 bytes
         'decorations':              unpacked_header[23], # 4 bytes
 
         'flagsOffset':              unpacked_header[24], # 4 bytes
@@ -87,62 +89,63 @@ def readRomHeader(rom):
         'pokemonNameLength2':       unpacked_header[36], # 1 byte
 
         #'unknown fields 5-17':      unpacked_header[37:49], # 1 byte each
-        'saveBlock2Size':           unpacked_header[50], # 4 bytes
-        'saveBlock1Size':           unpacked_header[51], # 4 bytes
+        # 3 byte-long padding
+        'saveBlock2Size':           unpacked_header[51], # 4 bytes
+        'saveBlock1Size':           unpacked_header[52], # 4 bytes
 
-        'partyCountOffset':         unpacked_header[52], # 4 bytes
-        'partyOffset':              unpacked_header[53], # 4 bytes
-        'warpFlagsOffset':          unpacked_header[54], # 4 bytes
-        'trainerIdOffset':          unpacked_header[55], # 4 bytes
-        'playerNameOffset':         unpacked_header[56], # 4 bytes
-        'playerGenderOffset':       unpacked_header[57], # 4 bytes
-        'frontierStatusOffset':     unpacked_header[58], # 4 bytes
-        'frontierStatusOffset2':    unpacked_header[59], # 4 bytes
-        'externalEventFlagsOffset': unpacked_header[60], # 4 bytes
-        'externalEventDataOffset':  unpacked_header[61], # 4 bytes
+        'partyCountOffset':         unpacked_header[53], # 4 bytes
+        'partyOffset':              unpacked_header[54], # 4 bytes
+        'warpFlagsOffset':          unpacked_header[55], # 4 bytes
+        'trainerIdOffset':          unpacked_header[56], # 4 bytes
+        'playerNameOffset':         unpacked_header[57], # 4 bytes
+        'playerGenderOffset':       unpacked_header[58], # 4 bytes
+        'frontierStatusOffset':     unpacked_header[59], # 4 bytes
+        'frontierStatusOffset2':    unpacked_header[60], # 4 bytes
+        'externalEventFlagsOffset': unpacked_header[61], # 4 bytes
+        'externalEventDataOffset':  unpacked_header[62], # 4 bytes
 
-        'unk16':                    unpacked_header[62], # 4 bytes
+        'unk16':                    unpacked_header[63], # 4 Bytes
 
-        'speciesInfo':              unpacked_header[63], # 4 bytes
-        # 'abilityNames':             unpacked_header[64], # 4 bytes *
-        # 'abilityDescriptions':      unpacked_header[65], # 4 bytes *
+        'speciesInfo':              unpacked_header[64] - int("0x8000000", 16), # 4 bytes
+        # 'abilityNames':             unpacked_header[65], # 4 bytes *
+        # 'abilityDescriptions':      unpacked_header[66], # 4 bytes *
 
-        'items':                    unpacked_header[66], # 4 bytes
-        'moves':                    unpacked_header[67], # 4 bytes
-        'ballGfx':                  unpacked_header[68], # 4 bytes
-        'ballPalettes':             unpacked_header[69], # 4 bytes
+        'items':                    unpacked_header[67] - int("0x8000000", 16), # 4 bytes
+        'moves':                    unpacked_header[68] - int("0x8000000", 16), # 4 bytes
+        'ballGfx':                  unpacked_header[69], # 4 bytes
+        'ballPalettes':             unpacked_header[70], # 4 bytes
 
-        'moves':                    unpacked_header[70], # 4 bytes
-        'ballGfx':                  unpacked_header[71], # 4 bytes
-        'ballPalettes':             unpacked_header[72], # 4 bytes
+        'gcnLinkFlagsOffset':       unpacked_header[71], # 4 bytes
+        'gameClearFlag':            unpacked_header[72], # 4 bytes
+        'ribbonFlag':               unpacked_header[73], # 4 Bytes
 
-        'bagCountItems':            unpacked_header[73], # 1 byte
-        'bagCountKeyItems':         unpacked_header[74], # 1 byte
-        'bagCountPokeballs':        unpacked_header[75], # 1 byte
-        'bagCountTMHMs':            unpacked_header[76], # 1 byte
-        'bagCountBerries':          unpacked_header[77], # 1 byte
+        'bagCountItems':            unpacked_header[74], # 1 byte
+        'bagCountKeyItems':         unpacked_header[75], # 1 byte
+        'bagCountPokeballs':        unpacked_header[76], # 1 byte
+        'bagCountTMHMs':            unpacked_header[77], # 1 byte
+        'bagCountBerries':          unpacked_header[78], # 1 byte
 
-        'pcItemsCount':             unpacked_header[78], # 3 bytes
-        'pcItemsOffset':            unpacked_header[79], # 4 bytes
-        'giftRibbonsOffset':        unpacked_header[80], # 4 bytes
-        'enigmaBerryOffset':        unpacked_header[81], # 4 bytes
-        'enigmaBerrySize':          unpacked_header[82], # 4 bytes
-        # 'moveDescriptions':         unpacked_header[83], # 4 bytes *
-        'unk20':                    unpacked_header[84], # 4 bytes
+        'pcItemsCount':             unpacked_header[79], # 3 bytes
+        'pcItemsOffset':            unpacked_header[80], # 4 bytes
+        'giftRibbonsOffset':        unpacked_header[81], # 4 bytes
+        'enigmaBerryOffset':        unpacked_header[82], # 4 bytes
+        'enigmaBerrySize':          unpacked_header[83], # 4 bytes
+        # 'moveDescriptions':         unpacked_header[84], # 4 bytes *
+        'unk20':                    unpacked_header[85], # 4 bytes
 
-        #'PADDING_2':                unpacked_header[85],
+        #'PADDING_2':                unpacked_header[86],
 
-        'rhh_magic':                unpacked_header[86], # 6 bytes, should be "RHHEXP"
+        'rhh_magic':                unpacked_header[87], # 6 bytes, should be "RHHEXP"
 
-        'expansionVersionMajor':    unpacked_header[87], # 1 byte
-        'expansionVersionMinor':    unpacked_header[88], # 1 byte
-        'expansionVersionPatch':    unpacked_header[89], # 1 byte
-        'expansionVersionFlags':    unpacked_header[90], # 1 byte
-
-        'movesCount':               unpacked_header[91],
-        'numSpecies':               unpacked_header[92],
-        'abilitiesCount':           unpacked_header[93],
-        'abilities':                unpacked_header[94],
+        'expansionVersionMajor':    unpacked_header[88], # 1 byte
+        'expansionVersionMinor':    unpacked_header[89], # 1 byte
+        'expansionVersionPatch':    unpacked_header[90], # 1 byte
+        'expansionVersionFlags':    unpacked_header[91], # 1 byte
+        # 2 byte-long padding
+        'movesCount':               unpacked_header[93],
+        'numSpecies':               unpacked_header[94],
+        'abilitiesCount':           unpacked_header[95],
+        'abilities':                unpacked_header[96] - int("0x8000000", 16),
     }
     return header_dict
 
