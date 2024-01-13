@@ -133,17 +133,19 @@ def process(savedata: dict, game_version: str, rom: dict):
             substructSections[orderstring[j]] = decryptedValue
         #print(substructSections[orderstring[j]])
 
-        # pokemon['species'] = searchDotHFile('./species.h', str(int(struct.unpack('<H', substructSections['G'][0:2])[0])))
         species = rom['species'][int(struct.unpack('<H', substructSections['G'][0:2])[0])]
         pokemon['species'] = species['name'].upper()
         print(pokemon['species'].upper())
 
-        #pokemon['exp'] = int(struct.unpack('<I', substructSections['G'][4:8])[0])
-        pokemon['item'] = searchDotHFile('./items.h', str(int(struct.unpack('<H', substructSections['G'][2:4])[0])))
-        pokemon['move1'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][0:2])[0])))
-        pokemon['move2'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][2:4])[0])))
-        pokemon['move3'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][4:6])[0])))
-        pokemon['move4'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][6:8])[0])))
+        pokemon['exp'] = int(struct.unpack('<I', substructSections['G'][4:8])[0])
+        heldItemId = int(struct.unpack('<H', substructSections['G'][2:4])[0])
+        pokemon['item'] = searchDotHFile('./items.h', str(heldItemId))
+
+        moves = []
+        for i in range(4):
+            moveId = int(struct.unpack('<H', substructSections['A'][i*2:i*2+2])[0])
+            moves.append(searchDotHFile('./moves.h', str(moveId)))
+        pokemon['moves'] = moves
 
         pokemon['EvHp'] = int(struct.unpack('<B', substructSections['E'][0:1])[0])
         pokemon['EvAtk'] = int(struct.unpack('<B', substructSections['E'][1:2])[0])
@@ -267,10 +269,8 @@ def teamToShowdown(team: dict):
             f.write(team[i]['Nature'] + " Nature\n")
             f.write("IVs: " + str(team[i]['Ivs']['hp']) + " HP / " + str(team[i]['Ivs']['attack']) + " Atk / " + str(team[i]['Ivs']['defence']) + " Def / ")
             f.write(str(team[i]['Ivs']['spatk']) + " SpA / " + str(team[i]['Ivs']['spdef']) + " SpD / " + str(team[i]['Ivs']['speed']) + " Spe\n")
-            f.write("- " + team[i]['move1'] + "\n")
-            f.write("- " + team[i]['move2'] + "\n")
-            f.write("- " + team[i]['move3'] + "\n")
-            f.write("- " + team[i]['move4'] + "\n")
+            for move in team[i]['moves']:
+                f.write("- " + move + "\n")
             f.write("\n")
 
         f.close()
