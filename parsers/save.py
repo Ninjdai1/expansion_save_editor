@@ -80,7 +80,7 @@ def getCurrentSave(save_a: dict, save_b: dict):
 # 11 	3968 	PC buffer G
 # 12 	3968 	PC buffer H
 # 13 	2000 	PC buffer I
-def process(savedata: dict, game_version: str):
+def process(savedata: dict, game_version: str, rom: dict):
     save = {
         "name": None,
         "gender": None,
@@ -133,7 +133,11 @@ def process(savedata: dict, game_version: str):
             substructSections[orderstring[j]] = decryptedValue
         #print(substructSections[orderstring[j]])
 
-        pokemon['species'] = searchDotHFile('./species.h', str(int(struct.unpack('<H', substructSections['G'][0:2])[0])))
+        # pokemon['species'] = searchDotHFile('./species.h', str(int(struct.unpack('<H', substructSections['G'][0:2])[0])))
+        species = rom['species'][int(struct.unpack('<H', substructSections['G'][0:2])[0])]
+        pokemon['species'] = species['name'].upper()
+        print(pokemon['species'].upper())
+
         #pokemon['exp'] = int(struct.unpack('<I', substructSections['G'][4:8])[0])
         pokemon['item'] = searchDotHFile('./items.h', str(int(struct.unpack('<H', substructSections['G'][2:4])[0])))
         pokemon['move1'] = searchDotHFile('./moves.h', str(int(struct.unpack('<H', substructSections['A'][0:2])[0])))
@@ -161,19 +165,17 @@ def process(savedata: dict, game_version: str):
 
         pokemon['Ivs'] = getivs(int(struct.unpack('<I', substructSections['M'][4:8])[0]))
 
-        rawAbilities = getSpeciesAttribute(pokemon['species'], 'abilities')
-        abilities = re.split(r'[,{]', rawAbilities)
-        pokemon['Ability'] = re.sub(r'^.*?_', '', abilities[pokemon['Ivs']['AbilityFlag'] + 1])
+        abilitiesIds = species['abilities']
+        print(abilitiesIds[pokemon['Ivs']['AbilityFlag']])
+        pokemon['Ability'] = abilitiesIds[pokemon['Ivs']['AbilityFlag']]
+        # Only need to translate Abilities from int to strings and we're pretty much done here
 
-        rawGenderRatio = getSpeciesAttribute(pokemon['species'], 'genderRatio')
-        genderRatio = re.split(r'[()]', rawGenderRatio)
-        #print(genderRatio)
-
+        genderRatio = species['genderRatio']
         genderInteger = int(struct.unpack('<B', sections[1]["rawData"][offsets["team_offset"]+(0+(i*100)):offsets["team_offset"]+(1+(i*100))])[0])
 
-        if len(genderRatio) < 2:
+        if len(str(genderRatio)) < 2:
             pokemon['Gender'] = ""
-        elif genderInteger > (224 * 0.01 * float(genderRatio[1])):
+        elif genderInteger > (224 * 0.01 * float(genderRatio[0])):
             pokemon['Gender'] = "(M)"
         else:
             pokemon['Gender'] = "(F)"
@@ -203,11 +205,11 @@ def parseSave(path: str, game_version: str):
     #print(save)
     print(f"The current save slot is {save['slot']}")
 
-    processed_data = process(save, game_version)
+    rom = parseRom("pokeemerald.gba")
+    processed_data = process(save, game_version, rom)
 
     print(f"Player: {processed_data}")
 
-    romInfo = parseRom("pokeemerald.gba")
 
     return processed_data
 
@@ -271,7 +273,7 @@ def teamToShowdown(team: dict):
             if team[i]['item'] != 'NONE':
                 f.write('@ ' + team[i]['item'])
             f.write("\n")
-            f.write("Ability: " + team[i]['Ability'] + "\n")
+            f.write("Ability: " + str(team[i]['Ability']) + "\n")
             f.write("Level: " + str(team[i]['Level']) + "\n")
             f.write("EVs: " + str(team[i]['EvHp']) + " HP / " + str(team[i]['EvAtk']) + " Atk / " + str(team[i]['EvDef']) + " Def / ")
             f.write(str(team[i]['EvSpA']) + " SpA / " + str(team[i]['EvSpD']) + " SpD / " + str(team[i]['EvSpe']) + " Spe\n")

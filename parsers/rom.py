@@ -6,19 +6,26 @@ def parseRom(path: str):
     with open(path, 'rb') as f:
         rom = f.read()
 
-        headerInfo = readRomHeader(rom)
+        header_info = readRomHeader(rom)
         #for k in headerInfo.keys():
         #    print(f"{k}: \"{headerInfo[k]}\"")
 
-        expansionVersion = getExpansionVersion(headerInfo)
+        expansionVersion = getExpansionVersion(header_info)
         if not expansionVersion >= minimum_expansion_version:
             raise ValueError(f"Your rom is using expansion version {expansionVersion}, which is older than minimum supported version {minimum_expansion_version}")
 
-        readSpecies(rom, headerInfo)
+        species = readSpecies(rom, header_info)
+
+        return {
+            'expansionVersion': expansionVersion,
+            'header': header_info,
+            'species': species,
+        }
 
 minimum_expansion_version = "1.7.1"
 def getExpansionVersion(header):
     return f"{header['expansionVersionMajor']}.{header['expansionVersionMinor']}.{header['expansionVersionPatch']}"
+
 
 species_struct_size = 160
 def readSpecies(rom, header):
@@ -26,15 +33,19 @@ def readSpecies(rom, header):
     species_count = 1523# header['numSpecies']
     pokemonNameLength = header['pokemonNameLength1']
     print(pokemonNameLength)
+    species_dict = {}
 
     for i in range(species_count):
-        speciesBytes = rom[species_offset +species_struct_size*i : species_offset + species_struct_size*(i+1)]
-        species = parseSpecies(speciesBytes, pokemonNameLength, i)
+        species_bytes = rom[species_offset +species_struct_size*i : species_offset + species_struct_size*(i+1)]
+        species = parseSpecies(species_bytes, pokemonNameLength, i)
+        species_dict[species['id']] = species
 
         print(f"{species['name']} ({species['natDexNum']}) is a {species['category']} Pokémon\n"
             + f"    Its types are: {species['types']}\n"
             + f"    It has {species['stats']['hp']} HP, {species['stats']['attack']} Attack, {species['stats']['defense']} Def, {species['stats']['speed']} Speed, {species['stats']['spattack']} SpAtk, {species['stats']['spdefense']} SpDef\n"
             + f"    Its abilities are {species['abilities']}\n")
+    return species_dict
+
 
 def parseSpecies(byteSpecies, pokemonNameLength, index):
     stats = struct.unpack('< B B B B B B  ', byteSpecies[0:6])
@@ -46,6 +57,7 @@ def parseSpecies(byteSpecies, pokemonNameLength, index):
     abilities = struct.unpack('< H H H ', byteSpecies[24:30])
     category = utils.readstring(byteSpecies[31 : 31 + 13])
     name = utils.readstring(byteSpecies[44 : 44 + pokemonNameLength+1])
+    genderRatio = struct.unpack('< B', byteSpecies[18:19])
 
     natDexNum = struct.unpack('<H', byteSpecies[56 : 58])[0]
 
@@ -63,7 +75,8 @@ def parseSpecies(byteSpecies, pokemonNameLength, index):
         },
         'types': types,
         'abilities': abilities,
-        'category': category
+        'category': category,
+        'genderRatio': genderRatio,
     }
 
 type_table = [
