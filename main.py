@@ -1,7 +1,7 @@
 from parsers import parseSave
 import export
 
-data = parseSave('./pokeemerald.sav', "emerald")
+data = parseSave('./pokeemerald.sav', "expansion")
 
 print(f"Player: {data}")
 

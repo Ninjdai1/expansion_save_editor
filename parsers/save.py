@@ -1,11 +1,8 @@
 import struct
 from . import utils
-from games import offsets_dict, gamedata_dict
-import re
+from structures.saves import offsets_dict, gamedata_dict
 from . import readRomHeader, parseRom
 from operator import xor
-import io
-import os
 
 # More complete information on how the save data is structured can be found at:
 # https://bulbapedia.bulbagarden.net/wiki/Save_data_structure_(Generation_III)
@@ -87,7 +84,7 @@ def process(savedata: dict, game_version: str, rom: dict) -> dict:
         "team": [],
         "boxes": [],
     }
-    offsets = offsets_dict[game_version]
+    offsets = offsets_dict[game_version][rom["expansionVersion"]]
     gamedata = gamedata_dict[game_version]
 
     sections = savedata["sections"]
@@ -193,11 +190,18 @@ def process(savedata: dict, game_version: str, rom: dict) -> dict:
     return save
 
 def parseSave(path: str, game_version: str) -> dict:
+    rom = parseRom("pokeemerald.gba")
     if not game_version in offsets_dict:
         print(f"This version ({game_version}) is not supported ! If you are this version's developer, please define its offsets in offsets.py")
         return {}
-    else:
-        offsets = offsets_dict[game_version]
+    if not rom['expansionVersion'] in offsets_dict[game_version]:
+        print(f"This version of the expansion ({rom['expansionVersion']}) is not supported !")
+        #return {} # We currently don't return as no release is currently supported
+        rom["expansionVersion"] = "1.8" # Temporary override as we're developing against upcoming
+
+    offsets = offsets_dict[game_version][rom["expansionVersion"]]
+    print(offsets)
+
     data = utils.byteArrayFromFile(path)
     # There are two save files in gen III
     # The first one goes from 0 to 57344 (not included), the second from 57344 to 114688 (not included).
@@ -209,7 +213,6 @@ def parseSave(path: str, game_version: str) -> dict:
     #print(save)
     print(f"The current save slot is {save['slot']}")
 
-    rom = parseRom("pokeemerald.gba")
     processed_data = process(save, game_version, rom)
 
     return processed_data
