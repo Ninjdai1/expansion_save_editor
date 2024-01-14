@@ -53,7 +53,7 @@ def parseAbility(byteAbility, abilityNameLength, index):
         'name': name
     }
 
-item_struct_size = 34
+item_struct_size = 38
 item_struct_padding = 6
 def readItems(rom, header):
     items_offset = header['items']
@@ -69,7 +69,7 @@ def readItems(rom, header):
 
 def parseItem(byteItem, itemNameLength, index):
     price = struct.unpack("<I", byteItem[0:4])[0]
-    name = utils.readstring(byteItem[15:15+itemNameLength])
+    name = utils.readstring(byteItem[19:19+itemNameLength])
     return {
         'id': index,
         'price': price,
