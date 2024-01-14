@@ -26,8 +26,7 @@ def readRomHeader(rom):
     PADDING_2 = f"{516 - struct.calcsize(HEADER_FMT + PADDING_1 + GF_HEADER_FMT)}s"
     RHH_HEADER_FMT = f"6s \
             b b b c \
-            2s \
-            I I I I\
+            H H H I\
             "
 
     HEADERS = HEADER_FMT + PADDING_1 + GF_HEADER_FMT + PADDING_2 + RHH_HEADER_FMT
@@ -141,11 +140,11 @@ def readRomHeader(rom):
         'expansionVersionMinor':    unpacked_header[89], # 1 byte
         'expansionVersionPatch':    unpacked_header[90], # 1 byte
         'expansionVersionFlags':    unpacked_header[91], # 1 byte
-        # 2 byte-long padding
-        'movesCount':               unpacked_header[93],
-        'numSpecies':               unpacked_header[94],
-        'abilitiesCount':           unpacked_header[95],
-        'abilities':                unpacked_header[96] - int("0x8000000", 16),
+
+        'movesCount':               unpacked_header[92],
+        'numSpecies':               unpacked_header[93],
+        'abilitiesCount':           unpacked_header[94],
+        'abilities':                unpacked_header[95] - int("0x8000000", 16),
     }
     return header_dict
 
