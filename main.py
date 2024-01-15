@@ -1,7 +1,8 @@
-from parsers import parseSave
+from parsers import parseSave, parseRom
 import export
 
-data = parseSave('./pokeemerald.sav', "expansion")
+rom = parseRom('./pokeemerald.gba')
+data = parseSave('./pokeemerald.sav', "expansion", rom)
 
 print(f"Player: {data}")
 

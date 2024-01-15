@@ -1,6 +1,6 @@
 offsets_dict = {
     "expansion": {
-        "1.8": {
+        "1.8.0": {
             "save_a": [0, 57344],
             "save_b": [57344, 114688],
             "trainer_id": [10, 14],
