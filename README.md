@@ -3,6 +3,9 @@ Expansion save editor (Yet another gen 3 pokemon save editor)
 
 The goal of this save editor is to provide an easy way to edit a pokeemerald-expansion-based rom hack's save file by directly parsing the rom file to fetch the available pokemon, moves, items or abilities dynamically in order to support fakemons aswell as custom moves, items and abilities out of the box.
 
+> [!NOTE]  
+> As of the 16th of January, an implementation of an "API" in pokeemerald-expansion is being discussed on the RHH discord, in [this thread](https://discord.com/channels/419213663107416084/1196199792343265381). If the API ends up working and merged into the expansion, ESE will be obsolescent, as the API would allow cross-version compatibility for external tools. I've therefore stopped working on ESE until the API gets merged/refused, at which point I'll update this page. If the API gets merged, this repository will become archived for future reference. If no one writes a python interpreter for the API before me, I'll create a library for this purpose, and I'll remake ESE using the library.
+
 Usage
 -------------
 ESE's only requirement is python3.
